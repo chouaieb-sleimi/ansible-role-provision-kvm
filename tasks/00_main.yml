@@ -5,7 +5,7 @@
     var: vm_name
 
 - name: Provision vm tasks
-  ansible.builtin.import_tasks: tasks_provision.yml
+  ansible.builtin.import_tasks: 01_tasks_provision.yml
 
 - name: Ensure vm is started
   community.libvirt.virt:
@@ -17,5 +17,5 @@
   delay: 2
 
 - name: Connect host to guest vm tasks
-  ansible.builtin.import_tasks: tasks_connect.yml
+  ansible.builtin.import_tasks: 02_tasks_connect.yml
   when: vm_start_results is success
