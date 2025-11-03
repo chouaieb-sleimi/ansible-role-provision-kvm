@@ -2,14 +2,14 @@
 # tasks file for kvm_provision
 - name: Display vm name
   ansible.builtin.debug:
-    var: vm_name
+    var: config_vm_name
 
 - name: Provision vm tasks
   ansible.builtin.import_tasks: 01_tasks_provision.yml
 
 - name: Ensure vm is started
   community.libvirt.virt:
-    name: "{{ vm_name }}"
+    name: "{{ config_vm_name }}"
     state: running
   register: vm_start_results
   until: "vm_start_results is success"

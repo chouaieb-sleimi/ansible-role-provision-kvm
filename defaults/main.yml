@@ -11,12 +11,12 @@ virt_group: qemu
 libvirt_pool_dir: /var/lib/libvirt/images
 libvirt_image_dir: /var/lib/libvirt/images
 base_image_name: rhel-8.7-x86_64-kvm.qcow2
-vm_vcpus: 1
-vm_ram_mb: 512
-vm_net: default
+vm_cpu: 1
+vm_ram: 512
+vm_network: default
 
 # guest variables
-root_pass: root
-domain: example.com
-vm_name: vm-rhel8.7
-hostname: host_rhel8
+config_root_pass: root
+config_domain_name: example.com
+config_vm_name: vm-rhel8.7
+config_hostname: host_rhel8

@@ -13,11 +13,11 @@
   changed_when: false
 
 - name: Create vm if not exists
-  when: "vm_name not in existing_vms.list_vms"
+  when: "config_vm_name not in existing_vms.list_vms"
   block:
     - name: Copy base image to vm pool directory
       ansible.builtin.copy:
-        dest: "{{ libvirt_pool_dir }}/{{ vm_name }}.qcow2"
+        dest: "{{ libvirt_pool_dir }}/{{ config_vm_name }}.qcow2"
         src: "{{ libvirt_image_dir }}/{{ base_image_name }}"
         owner: "{{ virt_user }}"
         group: "{{ virt_group }}"
@@ -28,9 +28,9 @@
 
     - name: Configure the image using virt-customize
       ansible.builtin.command: |
-        virt-customize -a {{ libvirt_pool_dir }}/{{ vm_name }}.qcow2 \
-        --hostname "{{ hostname }}.{{ domain }}" \
-        --root-password password:{{ root_pass }} \
+        virt-customize -a {{ libvirt_pool_dir }}/{{ config_vm_name }}.qcow2 \
+        --hostname "{{ config_hostname }}.{{ config_domain_name }}" \
+        --root-password password:{{ config_root_pass }} \
         --ssh-inject 'root:file:{{ ssh_key }}' \
         --uninstall cloud-init --selinux-relabel
       when: copy_results is changed

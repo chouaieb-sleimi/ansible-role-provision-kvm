@@ -2,7 +2,7 @@
 - name: Get vm ip address
   ansible.builtin.shell: |
     set -o pipefail && \
-    virsh domifaddr {{ vm_name }} | \
+    virsh domifaddr {{ config_vm_name }} | \
     grep ipv4 | cut -c 47- | cut -d "/" -f 1
   changed_when: false
   register: virsh_output
@@ -22,15 +22,15 @@
 - name: Add vm to /etc/hosts
   ansible.builtin.lineinfile:
     path: /etc/hosts
-    search_string: "{{ hostname }}"
-    line: "{{ virsh_output['stdout'] }} {{ hostname }} {{ hostname }}.{{ domain }}"
+    search_string: "{{ config_hostname }}"
+    line: "{{ virsh_output['stdout'] }} {{ config_hostname }} {{ config_hostname }}.{{ config_domain_name }}"
     state: present
   register: hosts_file
   # notify: Update known_hosts file in vm host
 
 - name: Update known_hosts file in vm host
   ansible.builtin.known_hosts:
-    name: "{{ hostname }}"
+    name: "{{ config_hostname }}"
     state: absent
   become: true
   become_user: "{{ lookup('ansible.builtin.env', 'USER') }}"
