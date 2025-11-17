@@ -1,13 +1,22 @@
 # Ansible Role: Provision KVM
 
-Provisions KVM vms natively on RHEL/CentOS hosts
+Provisions KVM virtual machines natively on RHEL/CentOS hosts using `libvirt` and `virt-customize`.
 
----
+**What This Role Does:**
 
-## Dependencies
+1. **Ensures requirements** are installed (`guestfs-tools`, `python3-libvirt`)
+2. **Copies base image** from `libvirt_image_dir` to VM pool directory
+3. **Customizes the image** with hostname, root password, and SSH keys using `virt-customize`
+4. **Defines the VM** in libvirt using an XML template
+5. **Connects to the VM** for post-provisioning tasks
 
-**Infrastructure:** Virtualization must be enabled in the host with at least 1 Virtual Network
-**Packages:** Only `ansible` is needed to run this role
+**Dependencies:**
+
+- **Host:**
+  - **Infrastructure:** Virtualization must be enabled in the host with at least 1 Virtual Network
+  - **Packages:** Only `ansible` is needed to run this role
+- **Guest:**
+  - **Packages:** `guestfs-tools`, `python3-libvirt` (installed by the role)
 
 ---
 
@@ -18,8 +27,8 @@ For the whole list of variables, see `defaults/main.yml`:
 - **`home_dir`:** Home directory of the user whom the public ssh key will be injected in the VM
 - **`ssh_key_name`:** Name of the ssh public key to be injected in the VM guests
 - **`ssh_key`:** Path to the ssh public key
-- **``virt_user``**: User that runs VMs and own their storage disks. When using a custom user, it should belong to the `libvirt` group
-- **``virt_group``**: Group of user that runs VMs and own their storage disks. When using a custom user, it should belong to the `libvirt` group
+- **`virt_user`**: User that runs VMs and own their storage disks. When using a custom user, it should belong to the `libvirt` group
+- **`virt_group`**: Group of user that runs VMs and own their storage disks. When using a custom user, it should belong to the `libvirt` group
 - **`libvirt_pool_dir`:** directory containing `qcow2` base image files
 - **`libvirt_image_dir`:** storage directory for vm disk
 - **`vm_vcpus`:** VCPUs to assign to VM
@@ -57,53 +66,93 @@ hostname: "control"
 
 ---
 
-## Example Playbook
+## Quick Start
 
-You can use this playbook to easily provision a list of VMs with a great deal of control over the specs of each VM. You only need to customize the `vm_list` list variable before looping the role over it. example:
+1. **Install Ansible:**
+
+   ```bash
+   sudo dnf install -y ansible
+   ```
+
+2. **Configure `requirements.yaml`:**
+
+   ```bash
+    - name: ansible-role-provision-kvm-native
+      scm: git
+      src: https://github.com/chouaieb-sleimi/ansible-role-provision-kvm-native.git
+      version: main
+   ```
+    > **Note:** you might need to configure `roles_path` directive in your `ansible.cfg` to include the `./roles` directory
+
+3. **Install role**
+
+   ```bash
+   mkdir roles/
+   ansible-galaxy install -r requirements.yaml -p ./roles
+   ```
+
+4. **Call role in playbook**
+
+   see [usage examples](#usage-examples) below
+
+---
+
+## Usage Examples
+
+For complete examples including multi-VM provisioning and variable customization, see `samples/playbook.yaml`.
+
+### Single VM
 
 ```yaml
 ---
-- name: Provision KVM hosts
+- name: Provision single VM
+  hosts: localhost
+  become: true
+  vars:
+    vm_name: "webserver"
+    hostname: "web01"
+    base_image_name: "rhel-8.7-x86_64-kvm.qcow2"
+  roles:
+    - ansible-role-provision-kvm
+```
+
+### Multiple VMs (Looping)
+
+Use `vars` to define a list and loop through the role:
+
+```yaml
+---
+- name: Provision multiple VMs
   hosts: localhost
   become: true
   vars:
     vm_list:
       - {
-          vm_name: "control_rhel8.7",
+          vm_name: "control",
           hostname: "control",
           base_image_name: "rhel-8.7-x86_64-kvm.qcow2",
         }
       - {
-          vm_name: "node-1_alma8.7",
+          vm_name: "node1",
           hostname: "node1",
           base_image_name: "AlmaLinux-8-GenericCloud-8.7.x86_64.qcow2",
         }
       - {
-          vm_name: "node-2_alma8.7",
+          vm_name: "node2",
           hostname: "node2",
           base_image_name: "AlmaLinux-8-GenericCloud-8.7.x86_64.qcow2",
         }
-      - {
-          vm_name: "node-3_alma8.7",
-          hostname: "node3",
-          base_image_name: "AlmaLinux-8-GenericCloud-8.7.x86_64.qcow2",
-        }
-      - {
-          vm_name: "node-4_alma8.7",
-          hostname: "node4",
-          base_image_name: "AlmaLinux-8-GenericCloud-8.7.x86_64.qcow2",
-        }
-
   tasks:
-    - name: Include role kvm_provision
-      ansible.builtin.include_role:
-        name: kvm_provision
+    - ansible.builtin.include_role:
+        name: ansible-role-provision-kvm
       vars:
-        vm_name: "{{ item.vm_name }}"
-        hostname: "{{ item.hostname }}"
+        config_vm_name: "{{ item.vm_name }}"
+        config_hostname: "{{ item.hostname }}"
         base_image_name: "{{ item.base_image_name }}"
       loop: "{{ vm_list }}"
 ```
+
+---
 
 ## License
 
